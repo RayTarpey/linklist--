@@ -1,0 +1,213 @@
+//建構元、解構元(用來初始化類別中的成員變數)
+//(先看第一個範例，看完後再看Link list)
+#include <iostream>
+#include <cstdlib>
+using namespace std;
+void printNode(struct ListNode*);
+
+class MyClass {
+public:
+	int x;
+	int y;
+	MyClass() { //名稱需與類別名稱相同，如果定義了一個和類別名稱不同的函數，它就不會被當作建構元使用，而會被當作普通的成員函數
+		x = 0;
+		y = 0;
+	}
+	MyClass(int a, int b) {
+		x = a;
+		y = b;
+	}
+};
+
+class MyClass2 {//MyClass完全可以改寫成MyClass2的樣子，功能完全相同
+public:
+	int x;
+	int y;
+	MyClass2():x(0),y(0){}; //{}為ListNode 結構體的建構元的開始和結束標記，":"冒號代表初始化列表的開始標記
+	MyClass2(int a,int b):x(a),y(b){}; 
+};
+
+struct ListNode {//每個節點包含兩個部分：數據（val）和指向下一個節點的指標（next）
+	int val; //代表節點儲存的整數值
+	ListNode *next; //代表指向下一個 ListNode 節點的指針，想成next是一個位址，指向的型別為ListNode
+	ListNode() : val(0), next(nullptr) {}//第一建構函式
+	ListNode(int x) : val(x), next(nullptr) {} //第二建構函式
+	ListNode(int x, ListNode *next) : val(x), next(next) {} //第三建構函式
+};
+
+int main() {
+	//int* a = (int*) malloc(sizeof(int)*5) ;a[1]=3;
+	MyClass obj1;//使用"第一種構造函數"創一個名稱為obj1，類別為MyClass物件
+	MyClass obj2(1, 2);//使用"第二種構造函數"創一個名稱為obj2，類別為MyClass物件
+	cout << obj1.x << " " << obj1.y << endl; cout << obj2.x << " " << obj2.y << endl;
+	MyClass2 obj3;//MyClass完全可以改寫成MyClass2的樣子，功能完全相同
+	MyClass2 obj4(1, 2);
+	cout << obj3.x << " " << obj3.y << endl; cout << obj4.x << " " << obj4.y << endl;
+	//EX1(ListNode)-----------------------------------------------------------------------------------
+	//創建一個val為1的新節點，他的next是nullptr(因使用第二個建構函式)，且用new創建得到的是"位址"。再宣告一個型別為ListNode指標"head"指向新節點(即位新結點址與head相同)，所以head->val會是1，head->next會是nullptr
+	//而head的成員next也是ListNode位址的指標，所以next可以用來存新的 結點位址，可直接由head指向一個透過new與建構函式創建的結點
+	ListNode* head = new ListNode(1); //head在做->(訪問)其指向的對象的成員時，就等於是(*head).成員，EX: head->next等同(*head).next，但->會方便得多	
+	head->next = new ListNode(2); //如上述，此時head先訪問自己內部成員next，並指向新節點(新節點val為2、next指向空指標nullptr)，因head的成員next指向新節點的位址，所以當head->next時，就是指新節點的位址
+	head->next->next = new ListNode(3);
+	ListNode* x = head;//為了測後續printNode(x)用，因為head已經指向最後一個結點了
+	while(head){
+		cout<<head->val<<", ";
+		head = head->next;
+	}cout<<endl<<"---"<<endl;
+	printNode(x);cout<<"***"<<endl;
+	//EX2(ListNode 用迴圈將值存到結點)------------------------
+	int l[] = {4,5,6};
+	int n = sizeof(l)/sizeof(int);
+	ListNode* ls[3],lss[3];
+
+	//method1
+	/*for(int i=0; i<n; i++){
+	if(i<n-1){
+	if(i==0){
+	ls[i] = new ListNode(l[i]);
+	}
+	ls[i+1] = new ListNode(l[i+1]);
+	ls[i]->next = ls[i+1];
+	}
+	}
+	printNode(ls[0]);*/
+#pragma region method2
+	ls[0] = new ListNode (l[0]);
+	for(int i=1; i<n; i++){
+		ls[i] = new ListNode (l[i]);
+		ls[i-1]->next = ls[i];
+	}
+	printNode(ls[0]);
+#pragma endregion
+#pragma region method3
+	/*for(int i=0; i<n; i++){		
+	lss[i].val = l[i];
+	if(i<n-1){
+	lss[i].next = &lss[i+1];	
+	}
+	else{
+	lss[i].next = nullptr;
+	}
+	}
+	printNode(&lss[0]);*/  
+#pragma endregion
+	//這樣寫會出錯，因為還沒定義新的ListNode，所以抓不到來用
+	/*for(int i=0; i<n; i++){
+	ls[i] = new ListNode(l[i]);
+	if(i<n-1){
+	ls[i]->next = ls[i+1];
+	}
+	}*/
+
+	//EX3(ListNode--Search)------------------------
+	ListNode *now = ls[0];//用new創建物件，返回值是物件的位址
+	int target = 4;
+	while(now){
+		if(now->val == target){
+			printf("found\n");
+			break;
+		}
+		now = now->next;
+		if(now==nullptr){
+			cout<<"not found"<<endl;
+		}
+	}
+
+	//EX4(ListNode--Insert)------------------------
+	int t = 5;
+	ListNode *ins= new ListNode(8);//用new創建物件，返回值是物件的位址
+	while(now){
+		if(now->val == t){
+			ins->next = now->next;
+			now->next = ins;
+			printf("Insert after target successgully\n");
+			break;
+		}
+		now = now->next;
+		if(now==nullptr){
+			cout<<"can't find the target"<<endl;
+		}
+	}
+	now = ls[0];//要給回去，不然不會從頭顯示
+	printNode(now);
+
+	//EX5(ListNode--Delete)------------------------
+	//----自己寫的方法，不是很好，只能刪除一個結點----{
+	/*t = 4;//要刪除的目標
+	now = ls[0];
+	ListNode* prev = ls[0];
+	ListNode* header = ls[0];
+	while(now){
+		if(now->val == t && prev == ls[0]){//避免第一個就找到了
+			header = header->next;//如果第一個就找到了，則把頭指向下一個
+			break;
+		}
+		if(now->val == t){//在中間找到的情況
+			prev->next = now->next;//把前一個位址的next指向now的下一個(now->next)
+			delete now;
+			break;
+		}
+		else{
+			prev = now;//沒有找到就儲存當前的位址給prev
+		}
+		now = now->next;
+	}
+	printNode(header);	*/
+	//----自己寫的方法，不是很好，只能刪除一個結點----}
+
+	//----雙指針方法刪除----{假設A為前結點、B為刪除結點、C為刪除點的下一個結點，A的next指向B，B的next指向C...
+	ListNode** p = &ls[0];//取位址的位址，其中*p指向的是整個結構，p是指向整個結構的指針。
+	t = 5;
+	while(*p){
+		if(t == (*p)->val){//如果找到B，把B位址值存到temp(此時*p仍為B)，再訪問B的成員next得到C位址，把B指向C位址，此時*p變成C(即B變C)，連帶A的成員next也指向C
+			ListNode* temp = *p;
+			*p = (*p)->next; //*p除了為刪除節點的位址外(ls[1])，"也是刪除節點前結點的成員next(ls[0]->next)!!"。這句可以看成兩種方式 : ls[1] = ls[2] 、 ls[0]->next = ls[2]，也就是A的next指向C(跳過B了)
+			delete temp;
+			break;
+		}
+		//如果要遍歷鍊表，這樣寫會有問題(無法從頭開始)，因為ls[0](head)會被修改掉，遍歷會從刪除點的下一個開始。因為初始狀態p指向&ls[0]，*p指向ls[0]結構的位址，當沒進if 時會執行*p = (*p)->next，也就是ls[0]=ls[1]
+		//此時*p取址得到ls[0]，把ls[1]傳給ls[0]，所以*p看似指向ls[0]，但其實ls[0]存著ls[1]位址，所以現在的ls[0]其實指向了其他結點位址，而非固定不變。迴圈中空間結構變化，p一直指向ls[0]，迴圈一直把下個節點的位址一直存到ls[0]。
+		//*p = (*p)->next;
+		//如果不想變動要這樣寫:因為初始狀態，p指向&ls[0]*p指向ls[0]，當沒進if 時會執行p = &((*p)->next)，將p指向&ls[1]，此時的*p指向ls[1]，而ls[0]依舊是ls[0]，所以ls[0]依舊是指向頭結點的指針的值。
+		//迴圈中空間結構變化，p一直指向下n個結點位址的位址，*p指向下n個節點的位址，所以不會改變頭結點ls[0]指向的位址
+		p = &((*p)->next);
+	}
+	printNode(ls[0]);
+	//----雙指針方法刪除----}
+
+	//EX6(ListNode--Reverse)------------------------
+	ListNode* re = new ListNode(1);
+	re->next = new ListNode(2);
+	ListNode* cur= re->next;
+	int numb[3] = {3,4,5};
+	for(int i=0; i<3; i++){
+		cur->next = new ListNode(numb[i]);
+		cur = cur->next;
+	}
+	printNode(re);
+	//*************************
+	ListNode* previ=nullptr,*curr=re,*nex=nullptr;//五個步驟:1.previ要初始化 2.由當前的next找到下一個 3.當前的next指向prev 4.把當前變前一個 5.把下一個變當前的
+	while(curr){
+		nex = curr->next;//將當前結點的next指向下個結點，並存於nex
+		curr->next = previ;//將當前結點的next指向前一個結點(初始為nullptr)
+		previ = curr;//將previ指向curr，也就是將previ裡面存的位址變成curr的，為了下一輪做準備
+		curr = nex;//將curr指向nex，cur裡面存的值變成nex的，為了下一輪做準備
+	}
+	printNode(previ);
+	//假設總共三個結點:
+	//第一次:1.node1的next找到node2傳給nex 2.node1指向prev(nullptr) 3.prev變node1位址 4.cur變node2位址
+	//第二次:1.node2的next找到node3傳給nex 2.node2指向prev(node1) 3.prev變node2位址 4.cur變node2位址
+	//第三次:1.node3的next找到nullptr傳給nex 2.node3指向prev(node2) 3.prev變node3位址 4.cur變nullptr
+	//所以要遍歷鍊表要用prev
+	//EX6(ListNode--Reverse)------------------------
+
+	system("pause");
+	return 0;
+}
+
+void printNode(struct ListNode* h){
+	while(h){
+		cout<<h->val<<" ";
+		h = h->next;
+	}cout<<endl;
+}
